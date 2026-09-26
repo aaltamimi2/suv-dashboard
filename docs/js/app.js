@@ -467,6 +467,7 @@
     var locals = localRows("madison").concat(localRows("detroit"));
     var deals = [];
     locals.forEach(function (r) {
+      if (r.priceFlag === "review") return; // price quarantined: bio disagrees
       var ref = natMedByKey[r.model + "|" + r.titleStatus];
       if (ref == null || r.price >= ref) return;
       deals.push({ r: r, disc: (ref - r.price) / ref });
@@ -613,7 +614,10 @@
     $("listingsBody").innerHTML = shown.map(function (r) {
       return "<tr>" +
         '<td class="num"><span class="t"><strong>' + fmt$(r.price) + "</strong></span>" +
-        (r.outlier ? '<span class="outlier-flag">outlier</span>' : "") + "</td>" +
+        (r.outlier ? '<span class="outlier-flag">outlier</span>' : "") +
+        (r.priceFlag === "corrected" ? '<span class="price-flag" title="Card price was wrong; using the price from the listing description">bio ✓</span>' : "") +
+        (r.priceFlag === "review" ? '<span class="price-flag warn" title="Card price disagrees with the description; excluded from stats">check price</span>' : "") +
+        (r.priceFlag === "unverified" ? '<span class="price-flag dim" title="Far off the median and no price found in the description">unverified</span>' : "") + "</td>" +
         '<td><a href="' + esc(r.url) + '" target="_blank" rel="noopener">' + esc(shortTitle(r.title, 52)) + "</a></td>" +
         '<td class="num"><span class="t">' + (r.year || "–") + "</span></td>" +
         '<td class="num"><span class="t">' + (r.mileage != null ? fmtN(r.mileage) : "–") + "</span></td>" +
