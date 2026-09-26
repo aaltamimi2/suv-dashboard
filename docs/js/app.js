@@ -46,6 +46,7 @@
 
   var LISTINGS = [];
   var AUCTIONS = [];
+  var SOLDCOMPS = null;
   var TRENDS = { days: [] };
   var META = {};
 
@@ -702,6 +703,79 @@
     });
   }
 
+  /* ---------------- sold comps view ---------------- */
+  var soldSortKey = "price", soldSortDir = -1;
+  var SOLD_SORTS = {
+    price: function (r) { return r.price || 0; },
+    title: function (r) { return (r.title || "").toLowerCase(); },
+    year: function (r) { return r.year || 0; },
+    soldDate: function (r) { return r.soldDate || ""; },
+    location: function (r) { return (r.location || "").toLowerCase(); }
+  };
+  function renderSold() {
+    var sc = SOLDCOMPS || {};
+    var models = sc.models || {};
+    var mks = Object.keys(MODEL_LABELS).filter(function (mk) {
+      return models[mk] && (state.model === "all" || state.model === mk);
+    });
+
+    var kpis = "";
+    mks.forEach(function (mk) {
+      var m = models[mk];
+      var bandTxt = "";
+      if (m.bands && m.bands["2017-2020"].median != null && m.bands["2021-2024"].median != null) {
+        bandTxt = " · '17–'20 " + fmt$(m.bands["2017-2020"].median) +
+          " / '21–'24 " + fmt$(m.bands["2021-2024"].median);
+      }
+      kpis += kpi(MODEL_LABELS[mk] + " sold median", fmt$(m.median),
+        fmtN(m.count) + " sold comps" + bandTxt);
+    });
+    var gaps = mks.map(function (mk) { return models[mk].askingVsSold; })
+      .filter(function (g) { return g != null; });
+    if (gaps.length) {
+      var avg = gaps.reduce(function (a, b) { return a + b; }, 0) / gaps.length;
+      kpis += kpi("Asking vs sold", fmtPct(avg),
+        "Madison FB asking median over eBay sold median");
+    }
+    if (!kpis) {
+      kpis = kpi("No sold comps yet", "–",
+        "the eBay scan hasn't returned data — see note below");
+    }
+    $("soldKpis").innerHTML = kpis;
+
+    var rows = ((sc.recent || []).filter(function (r) {
+      if (state.model !== "all" && r.model !== state.model) return false;
+      if (r.year != null && (r.year < state.yearMin || r.year > state.yearMax)) return false;
+      return true;
+    })).slice();
+    var fn = SOLD_SORTS[soldSortKey] || SOLD_SORTS.price;
+    rows.sort(function (a, b) {
+      var va = fn(a), vb = fn(b);
+      return (va < vb ? -1 : va > vb ? 1 : 0) * soldSortDir;
+    });
+    $("soldSub").textContent = fmtN(rows.length) + " recent eBay Motors sales in scope" +
+      (sc.updatedAt ? " · comps updated " + esc(String(sc.updatedAt).slice(0, 10)) : "") +
+      " · click a column to sort";
+    $("soldBody").innerHTML = rows.length ? rows.map(function (r) {
+      return "<tr>" +
+        '<td class="num"><span class="t"><strong>' + fmt$(r.price) + "</strong></span></td>" +
+        '<td><a href="' + esc(r.url) + '" target="_blank" rel="noopener">' +
+        esc(shortTitle(r.title, 52)) + "</a><br>" +
+        '<span class="muted" style="font-size:0.75rem">' + esc(r.modelLabel || "") + "</span></td>" +
+        '<td class="num"><span class="t">' + (r.year || "–") + "</span></td>" +
+        '<td class="num"><span class="t">' + esc(r.soldDate || "–") + "</span></td>" +
+        "<td>" + esc(r.location || "–") + "</td>" +
+        "</tr>";
+    }).join("") : '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">' +
+      (sc.updatedAt ? "No sold comps under the current filters."
+        : "No sold comps yet — eBay blocked our server's first request, so the scraper is parked until we can run it from a different route. Asking medians elsewhere on this site are still live.") +
+      "</td></tr>";
+    document.querySelectorAll("#soldTable th[data-sort]").forEach(function (th) {
+      var k = th.dataset.sort;
+      th.innerHTML = th.textContent.replace(/ [▲▼]/, "") + (soldSortKey === k ? (soldSortDir === 1 ? " ▲" : " ▼") : "");
+    });
+  }
+
   /* ---------------- view switching + controls ---------------- */
   function setView(v) {
     state.view = v;
@@ -716,6 +790,7 @@
     if (v === "trends") renderTrends();
     if (v === "listings") renderListings();
     if (v === "auctions") renderAuctions();
+    if (v === "sold") renderSold();
   }
 
   function segWire(id, attr, apply) {
@@ -737,6 +812,7 @@
     if (state.view === "trends") renderTrends();
     if (state.view === "listings") renderListings();
     if (state.view === "auctions") renderAuctions();
+    if (state.view === "sold") renderSold();
   }
 
   function initControls() {
@@ -776,6 +852,15 @@
       };
     });
 
+    document.querySelectorAll("#soldTable th[data-sort]").forEach(function (th) {
+      th.onclick = function () {
+        var k = th.dataset.sort;
+        if (soldSortKey === k) soldSortDir *= -1;
+        else { soldSortKey = k; soldSortDir = -1; }
+        renderSold();
+      };
+    });
+
     $("closeDetail").onclick = function () { $("detailPanel").classList.add("hidden"); };
     window.addEventListener("resize", function () {
       if (state.view === "compare") renderCompare();
@@ -791,6 +876,7 @@
       var j = await r.json();
       LISTINGS = j.listings || [];
       AUCTIONS = j.auctions || [];
+      SOLDCOMPS = j.soldComps || null;
       META = j.meta || {};
     } catch (e) {
       $("dataFooter").textContent = "Could not load market data — retrying…";
