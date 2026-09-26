@@ -35,6 +35,7 @@
           <button data-view="trends">Trends</button>
           <button data-view="listings">Listings</button>
           <button data-view="auctions">Auctions</button>
+          <button data-view="sold">Sold comps</button>
         </div>
       </nav>
 
@@ -207,10 +208,36 @@
           <p class="hint-inline" style="margin:10px 2px 0">Repair ÷ ACV ratio screens severity: near 100% means the insurer totaled it at full value (heavy/structural). Photo-verified lots carry a verdict — hover it for the note.</p>
         </div>
       </section>
+
+      <section class="view hidden" id="view-sold">
+        <div class="scroll">
+          <div class="page-head">
+            <div>
+              <p class="eyebrow">Transaction data</p>
+              <h2 class="page-title">Sold comps</h2>
+            </div>
+            <p class="page-sub" id="soldSub">Actual eBay Motors sale prices — what cars really changed hands for, not asking prices.</p>
+          </div>
+          <div class="kpis" id="soldKpis"></div>
+          <div class="card table-card">
+            <table id="soldTable">
+              <thead><tr>
+                <th data-sort="price">Sold price</th>
+                <th data-sort="title">Listing</th>
+                <th data-sort="year">Year</th>
+                <th data-sort="soldDate">Sold</th>
+                <th data-sort="location">Location</th>
+              </tr></thead>
+              <tbody id="soldBody"></tbody>
+            </table>
+          </div>
+          <p class="hint-inline" style="margin:10px 2px 0">Green prices on eBay's sold search are realized sales; ended-unsold listings are excluded. Asking-vs-sold compares the Madison Facebook asking median against the eBay sold median.</p>
+        </div>
+      </section>
     </main>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="js/app.js?v=20260926e"></script>
+  <script src="js/app.js?v=20260926f"></script>
 </body>
 </html>
