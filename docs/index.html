@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SUV Market Dashboard</title>
+<meta name="description" content="Daily Facebook Marketplace prices for Jeep Grand Cherokee and Chevrolet Equinox around Madison WI and Detroit MI." />
+<link rel="stylesheet" href="css/styles.css?v=1" />
+</head>
+<body>
+<header class="topbar">
+  <div>
+    <h1>SUV Market Dashboard</h1>
+    <p class="subtitle">Grand Cherokee &amp; Equinox &middot; Madison WI vs Detroit MI &middot; vs national</p>
+  </div>
+  <p class="updated">Updated <span id="updatedAt">…</span></p>
+</header>
+
+<main>
+  <section class="card controls" aria-label="Filters">
+    <div class="control-row">
+      <div class="seg" role="group" aria-label="Market">
+        <button data-market="madison" class="active">Madison</button>
+        <button data-market="detroit">Detroit</button>
+        <button data-market="compare">Compare</button>
+      </div>
+      <div class="seg" role="group" aria-label="Model">
+        <button data-model="all" class="active">Both models</button>
+        <button data-model="jeep-grand-cherokee">Grand Cherokee</button>
+        <button data-model="chevy-equinox">Equinox</button>
+      </div>
+      <div class="seg" role="group" aria-label="Title status">
+        <button data-title="all" class="active">Any title</button>
+        <button data-title="clean">Clean</button>
+        <button data-title="unknown">Unknown</button>
+        <button data-title="salvage">Salvage</button>
+      </div>
+    </div>
+    <div class="control-row sliders">
+      <label class="slider">
+        <span>Within <strong id="radiusVal">150</strong> mi</span>
+        <input id="radius" type="range" min="10" max="150" step="5" value="150" />
+      </label>
+      <label class="years">Year
+        <select id="yearMin" aria-label="Min year"></select>
+        <span>–</span>
+        <select id="yearMax" aria-label="Max year"></select>
+      </label>
+    </div>
+  </section>
+
+  <section id="kpis" class="kpis" aria-live="polite"></section>
+
+  <section class="card">
+    <h2>Price distribution</h2>
+    <div id="hist" class="bars"></div>
+  </section>
+
+  <section class="card">
+    <h2>Median price by year</h2>
+    <div id="byYear" class="bars"></div>
+  </section>
+
+  <section class="card">
+    <h2>Listings <span id="listCount" class="muted"></span></h2>
+    <div class="table-wrap">
+      <table id="listings">
+        <thead>
+          <tr>
+            <th data-sort="price">Price</th>
+            <th data-sort="year">Year</th>
+            <th>Vehicle</th>
+            <th data-sort="mileage">Miles</th>
+            <th>Title</th>
+            <th data-sort="distanceMi">Dist</th>
+            <th>Location</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="muted small">Tap a row to open the Facebook listing. Flagged outlier prices are excluded from medians.</p>
+  </section>
+
+  <footer class="muted small">
+    <p>Data: Facebook Marketplace, scraped daily. Distances are miles from the market center (Madison WI / Detroit MI). National = 15-metro average proxy, updated weekly.</p>
+  </footer>
+</main>
+
+<script src="js/app.js?v=1"></script>
+</body>
+</html>
