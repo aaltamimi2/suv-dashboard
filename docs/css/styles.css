@@ -302,6 +302,9 @@ tbody a:hover { text-decoration: underline; }
 .title-pill.unknown { background: #f1f5f9; color: #64748b; }
 .title-pill.salvage { background: #fee2e2; color: #b91c1c; }
 .outlier-flag { color: var(--yellow); font-size: 0.7rem; margin-left: 6px; }
+.price-flag { color: var(--accent); font-size: 0.7rem; margin-left: 6px; font-weight: 600; }
+.price-flag.warn { color: var(--yellow); }
+.price-flag.dim { color: var(--muted); font-weight: 400; }
 
 .split-table td:first-child { color: var(--text-secondary); }
 
