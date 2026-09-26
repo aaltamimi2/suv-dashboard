@@ -28,7 +28,8 @@
 
   var MODEL_LABELS = { "jeep-grand-cherokee": "Grand Cherokee", "chevy-equinox": "Equinox" };
   var TITLE_LABELS = { clean: "Clean", salvage: "Salvage", unknown: "Unknown" };
-  var C = { green: "#22c55e", red: "#ef4444", gray: "#a3a3a3", blue: "#60a5fa", yellow: "#eab308" };
+  var C = { green: "#16a34a", red: "#dc2626", gray: "#94a3b8", blue: "#2563eb", teal: "#0d9488", yellow: "#b45309" };
+  var MADISON_C = "#2563eb", DETROIT_C = "#0d9488", NAT_C = "#94a3b8";
 
   /* ---------------- state ---------------- */
   var state = {
@@ -304,9 +305,9 @@
 
   function initMap() {
     map = L.map("map", { zoomControl: true, worldCopyJump: true });
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-      subdomains: "abcd",
+    // Same tile layer as the Robinhood flyer map — proven on this Pages setup.
+    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", {
+      attribution: "Tiles &copy; Esri",
       maxZoom: 19
     }).addTo(map);
     map.fitBounds(L.latLngBounds(METROS.map(function (m) { return [m.lat, m.lng]; })).pad(0.12));
@@ -357,7 +358,7 @@
       marker.on("click", function () { showMetroDetail(m.id); });
       if (m.focus) {
         L.circleMarker([m.lat, m.lng], {
-          radius: r + 5, color: "#ffffff", weight: 2, fillOpacity: 0, interactive: false
+          radius: r + 5, color: "#1d4ed8", weight: 2.5, fillOpacity: 0, interactive: false
         }).addTo(metroLayer);
         L.marker([m.lat, m.lng], {
           interactive: false, keyboard: false,
@@ -509,10 +510,11 @@
   }
 
   function renderPremiumChart() {
+    var colors = [MADISON_C, DETROIT_C];
     var series = Object.keys(MODEL_LABELS).map(function (mk, i) {
       return {
         label: MODEL_LABELS[mk],
-        color: i === 0 ? C.green : C.blue,
+        color: colors[i],
         points: TRENDS.days.map(function (d) {
           var m = d.madison && d.madison[mk], t = d.detroit && d.detroit[mk];
           var v = (m && t && m.med != null && t.med != null) ? m.med - t.med : null;
@@ -525,8 +527,8 @@
 
   function renderDistChart(mad, det) {
     histChart($("distChart"), [
-      { label: "Madison", color: C.green, values: mad.map(function (r) { return r.price; }) },
-      { label: "Detroit", color: C.blue, values: det.map(function (r) { return r.price; }) }
+      { label: "Madison", color: MADISON_C, values: mad.map(function (r) { return r.price; }) },
+      { label: "Detroit", color: DETROIT_C, values: det.map(function (r) { return r.price; }) }
     ], 2000);
   }
 
@@ -562,9 +564,9 @@
   function renderTrends() {
     var mk = state.trendModel;
     var series = [
-      { label: "Madison", color: C.green, key: "madison" },
-      { label: "Detroit", color: C.blue, key: "detroit" },
-      { label: "National", color: C.gray, key: "national" }
+      { label: "Madison", color: MADISON_C, key: "madison" },
+      { label: "Detroit", color: DETROIT_C, key: "detroit" },
+      { label: "National", color: NAT_C, key: "national" }
     ].map(function (s) {
       return {
         label: s.label, color: s.color,
@@ -585,7 +587,7 @@
       groups.push({ label: String(y), values: vals });
     }
     barChart($("yearChart"), groups, [MODEL_LABELS["jeep-grand-cherokee"], MODEL_LABELS["chevy-equinox"]],
-      [C.green, C.blue], { height: 250 });
+      [MADISON_C, DETROIT_C], { height: 250 });
   }
 
   /* ---------------- listings view ---------------- */
