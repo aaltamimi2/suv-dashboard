@@ -228,6 +228,7 @@ h2 {
 .badge.green { background: #dcfce7; color: #15803d; }
 .badge.red { background: #fee2e2; color: #b91c1c; }
 .badge.neutral { background: #f1f5f9; color: #64748b; }
+.badge.blue { background: #dbeafe; color: #1d4ed8; }
 .detail h3 { margin: 10px 0 6px; padding-right: 28px; font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.35; color: var(--text); }
 .detail .meta { color: var(--text-secondary); font-size: 0.82rem; margin-bottom: 14px; }
 .kv {
