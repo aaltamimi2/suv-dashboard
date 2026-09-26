@@ -34,6 +34,7 @@
           <button data-view="compare">Madison vs Detroit</button>
           <button data-view="trends">Trends</button>
           <button data-view="listings">Listings</button>
+          <button data-view="auctions">Auctions</button>
         </div>
       </nav>
 
@@ -178,10 +179,38 @@
           </div>
         </div>
       </section>
+
+      <section class="view hidden" id="view-auctions">
+        <div class="scroll">
+          <div class="page-head">
+            <div>
+              <p class="eyebrow">Sourcing lens</p>
+              <h2 class="page-title">Auction watch</h2>
+            </div>
+            <p class="page-sub" id="auctionCount"></p>
+          </div>
+          <div class="card table-card">
+            <table id="auctionsTable">
+              <thead><tr>
+                <th data-sort="ask">Ask</th>
+                <th data-sort="lot">Lot</th>
+                <th data-sort="year">Year</th>
+                <th data-sort="mileage">Miles</th>
+                <th data-sort="damage">Damage</th>
+                <th data-sort="docType">Title doc</th>
+                <th data-sort="saleDate">Sale</th>
+                <th data-sort="verdict">Screen</th>
+              </tr></thead>
+              <tbody id="auctionsBody"></tbody>
+            </table>
+          </div>
+          <p class="hint-inline" style="margin:10px 2px 0">Repair ÷ ACV ratio screens severity: near 100% means the insurer totaled it at full value (heavy/structural). Photo-verified lots carry a verdict — hover it for the note.</p>
+        </div>
+      </section>
     </main>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="js/app.js?v=20260926d"></script>
+  <script src="js/app.js?v=20260926e"></script>
 </body>
 </html>
