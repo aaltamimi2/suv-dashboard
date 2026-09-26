@@ -45,6 +45,7 @@
   };
 
   var LISTINGS = [];
+  var AUCTIONS = [];
   var TRENDS = { days: [] };
   var META = {};
 
@@ -434,7 +435,7 @@
     $("updatedAt").textContent = META.updatedAt
       ? "updated " + new Date(META.updatedAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
       : "";
-    $("dataFooter").textContent = "Daily scans · FB Marketplace · 2017–2024 model years · outliers excluded from medians.";
+    $("dataFooter").textContent = "Daily scans · FB Marketplace + SCA auctions · 2017–2024 model years · outliers excluded from medians.";
   }
   function stat(n, l, d) {
     return '<div class="stat"><div class="n">' + esc(n) + '</div><div class="l">' + esc(l) +
@@ -632,6 +633,75 @@
     });
   }
 
+  /* ---------------- auctions view ---------------- */
+  var aucSortKey = "saleDate", aucSortDir = 1;
+  var AUC_SORTS = {
+    ask: function (r) { return r.buyItNow != null ? r.buyItNow : (r.currentBid != null && r.currentBid > 0 ? r.currentBid : 1e12); },
+    lot: function (r) { return (r.location || "") + "|" + (r.lotId || ""); },
+    year: function (r) { return r.year || 0; },
+    mileage: function (r) { return r.mileage == null ? 1e12 : r.mileage; },
+    damage: function (r) { return (r.damage || "").toLowerCase(); },
+    docType: function (r) { return (r.docType || "").toLowerCase(); },
+    saleDate: function (r) { return r.saleDate || "zzzz"; },
+    verdict: function (r) { return r.verdict === "watch" ? 0 : r.verdict === "reject" ? 2 : 1; }
+  };
+  function auctionRows() {
+    return AUCTIONS.filter(function (r) {
+      if (r.year == null || r.year < state.yearMin || r.year > state.yearMax) return false;
+      if (state.model !== "all" && r.model !== state.model) return false;
+      if (state.title !== "all") {
+        var d = (r.docType || "").toLowerCase();
+        if (state.title === "clean" && d.indexOf("clear") < 0 && d.indexOf("clean") < 0) return false;
+        if (state.title === "salvage" && d.indexOf("salvage") < 0 && d.indexOf("scrap") < 0 && d.indexOf("junk") < 0) return false;
+        if (state.title === "unknown" && d) return false;
+      }
+      return true;
+    });
+  }
+  function ratioBadge(ratio) {
+    if (ratio == null || !isFinite(ratio)) return "";
+    var cls = ratio >= 0.7 ? "red" : ratio >= 0.45 ? "neutral" : "green";
+    return ' <span class="badge ' + cls + '" title="SCA estimated repair cost ÷ actual cash value">' +
+      Math.round(ratio * 100) + "%</span>";
+  }
+  function renderAuctions() {
+    var rows = auctionRows().slice();
+    var fn = AUC_SORTS[aucSortKey] || AUC_SORTS.saleDate;
+    rows.sort(function (a, b) {
+      var va = fn(a), vb = fn(b);
+      return (va < vb ? -1 : va > vb ? 1 : 0) * aucSortDir;
+    });
+    $("auctionCount").textContent = fmtN(rows.length) + " auction lots in scope · SCA salvage auctions · click a column to sort";
+    $("auctionsBody").innerHTML = rows.map(function (r) {
+      var ask = r.buyItNow != null
+        ? "<strong>" + fmt$(r.buyItNow) + '</strong> <span class="hint-inline">BIN</span>'
+        : (r.currentBid != null && r.currentBid > 0 ? fmt$(r.currentBid) + ' <span class="hint-inline">bid</span>' : "–");
+      var screen;
+      if (r.verdict === "watch") screen = '<span class="badge blue" title="' + esc(r.verdictNote || "") + '">WATCH</span>';
+      else if (r.verdict === "reject") screen = '<span class="badge red" title="' + esc(r.verdictNote || "") + '">REJECT</span>';
+      else screen = '<span class="muted">–</span>';
+      screen += ratioBadge(r.repairAcvRatio);
+      if (r.airbags === "deployed") screen += ' <span class="badge red" title="Airbags deployed">airbags</span>';
+      var doc = r.docType || "";
+      var docCls = /clear|clean/i.test(doc) ? "clean" : /salvage|scrap|junk/i.test(doc) ? "salvage" : "unknown";
+      return "<tr>" +
+        '<td class="num"><span class="t">' + ask + "</span></td>" +
+        '<td><a href="' + esc(r.url) + '" target="_blank" rel="noopener">Lot ' + esc(r.lotId) + "</a><br>" +
+        '<span class="muted" style="font-size:0.75rem">' + esc(r.location) + "</span></td>" +
+        '<td class="num"><span class="t">' + (r.year || "–") + "</span></td>" +
+        '<td class="num"><span class="t">' + (r.mileage != null ? fmtN(r.mileage) : "–") + "</span></td>" +
+        "<td>" + esc(r.damage || "–") + "</td>" +
+        '<td><span class="title-pill ' + docCls + '">' + esc(doc || "–") + "</span></td>" +
+        '<td class="num"><span class="t">' + esc(r.saleDate || "Future") + "</span></td>" +
+        "<td>" + screen + "</td>" +
+        "</tr>";
+    }).join("") || '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">No auction lots under the current filters.</td></tr>';
+    document.querySelectorAll("#auctionsTable th[data-sort]").forEach(function (th) {
+      var k = th.dataset.sort;
+      th.innerHTML = th.textContent.replace(/ [▲▼]/, "") + (aucSortKey === k ? (aucSortDir === 1 ? " ▲" : " ▼") : "");
+    });
+  }
+
   /* ---------------- view switching + controls ---------------- */
   function setView(v) {
     state.view = v;
@@ -645,6 +715,7 @@
     if (v === "compare") renderCompare();
     if (v === "trends") renderTrends();
     if (v === "listings") renderListings();
+    if (v === "auctions") renderAuctions();
   }
 
   function segWire(id, attr, apply) {
@@ -665,6 +736,7 @@
     if (state.view === "compare") renderCompare();
     if (state.view === "trends") renderTrends();
     if (state.view === "listings") renderListings();
+    if (state.view === "auctions") renderAuctions();
   }
 
   function initControls() {
@@ -695,6 +767,15 @@
       };
     });
 
+    document.querySelectorAll("#auctionsTable th[data-sort]").forEach(function (th) {
+      th.onclick = function () {
+        var k = th.dataset.sort;
+        if (aucSortKey === k) aucSortDir *= -1;
+        else { aucSortKey = k; aucSortDir = 1; }
+        renderAuctions();
+      };
+    });
+
     $("closeDetail").onclick = function () { $("detailPanel").classList.add("hidden"); };
     window.addEventListener("resize", function () {
       if (state.view === "compare") renderCompare();
@@ -709,6 +790,7 @@
       var r = await fetch("data/dashboard.json" + bust, { cache: "no-store" });
       var j = await r.json();
       LISTINGS = j.listings || [];
+      AUCTIONS = j.auctions || [];
       META = j.meta || {};
     } catch (e) {
       $("dataFooter").textContent = "Could not load market data — retrying…";
