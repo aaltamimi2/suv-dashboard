@@ -78,6 +78,11 @@
 
       <section class="panel-block" aria-label="Flip candidates">
         <div class="section-head"><h2>Flip candidates</h2><span class="hint-inline">priced under market</span></div>
+        <div class="deal-controls">
+          <label class="muted" for="dealRepairs" title="Assumed repair cost per deal. A 30% buffer is added automatically before the 70% rule is applied.">Est. repairs $</label>
+          <input id="dealRepairs" type="number" min="0" step="100" value="1000" inputmode="numeric">
+        </div>
+        <p class="hint-inline" style="margin:2px 0 8px">70% rule: max buy = retail (national median) × 70% − repairs (with 30% buffer). Green ✓ = asking is at or under your max.</p>
         <ol id="dealList" class="rank-list"></ol>
       </section>
 
@@ -194,6 +199,7 @@
             <table id="auctionsTable">
               <thead><tr>
                 <th data-sort="ask">Ask</th>
+                <th data-sort="maxbid" title="70% rule: Madison comp retail × 70% − est. repairs (by damage category)">Max bid <span class="hint-inline">70%</span></th>
                 <th data-sort="lot">Lot</th>
                 <th data-sort="year">Year</th>
                 <th data-sort="mileage">Miles</th>
@@ -238,6 +244,6 @@
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="js/app.js?v=20260926f"></script>
+  <script src="js/app.js?v=20260926g"></script>
 </body>
 </html>
