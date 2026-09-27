@@ -458,6 +458,11 @@
     });
   }
 
+  function dealRepairInput() {
+    var el = $("dealRepairs");
+    var v = el ? parseFloat(el.value) : NaN;
+    return isFinite(v) && v >= 0 ? v : 0;
+  }
   function renderDeals() {
     var nat = nationalRows();
     var natMedByKey = {};
@@ -466,22 +471,29 @@
       (natMedByKey[k] = natMedByKey[k] || []).push(r.price);
     });
     Object.keys(natMedByKey).forEach(function (k) { natMedByKey[k] = median(natMedByKey[k]); });
+    // 70% flip rule: max buy = retail (national median) × 70% − repairs,
+    // with a 30% buffer auto-added to the repair estimate.
+    var rep = Math.round(dealRepairInput() * 1.3);
     var locals = localRows("madison").concat(localRows("detroit"));
     var deals = [];
     locals.forEach(function (r) {
       if (r.priceFlag === "review") return; // price quarantined: bio disagrees
       var ref = natMedByKey[r.model + "|" + r.titleStatus];
       if (ref == null || r.price >= ref) return;
-      deals.push({ r: r, disc: (ref - r.price) / ref });
+      deals.push({ r: r, disc: (ref - r.price) / ref, retail: ref });
     });
     deals.sort(function (a, b) { return b.disc - a.disc; });
     var top = deals.slice(0, 5);
     $("dealList").innerHTML = top.length ? top.map(function (d, i) {
+      var maxBuy = Math.max(0, Math.round(d.retail * 0.70 - rep));
+      var within = d.r.price <= maxBuy;
       return '<li><a class="rowlink" href="' + esc(d.r.url) + '" target="_blank" rel="noopener">' +
         '<span class="rank-num">' + String(i + 1).padStart(2, "0") + "</span>" +
         "<span><span class=\"id\">" + fmt$(d.r.price) + " · " + esc(metroLabel(d.r.metro)) + '</span><span class="name">' +
-        esc(shortTitle(d.r.title, 40)) + "</span></span>" +
-        '<span class="metric up">−' + (100 * d.disc).toFixed(0) + "%</span></a></li>";
+        esc(shortTitle(d.r.title, 40)) + "</span>" +
+        '<span class="deal70 muted">' + fmt$(d.retail) + " × 70% − " + fmt$(rep) + " repairs = <strong class=\"" + (within ? "up" : "down") + "\">max " + fmt$(maxBuy) + "</strong></span></span>" +
+        '<span class="metric ' + (within ? "up" : "down") + '" title="Asking ' + (within ? "is at/under" : "is over") + ' your 70% max buy">' +
+        (within ? "✓ " : "✗ ") + fmt$(maxBuy) + "</span></a></li>";
     }).join("") : '<li class="empty-state">No listings priced under their national median right now.</li>';
   }
 
@@ -638,6 +650,7 @@
   var aucSortKey = "saleDate", aucSortDir = 1;
   var AUC_SORTS = {
     ask: function (r) { return r.buyItNow != null ? r.buyItNow : (r.currentBid != null && r.currentBid > 0 ? r.currentBid : 1e12); },
+    maxbid: function (r) { return r.maxBid70 != null ? r.maxBid70 : 1e12; },
     lot: function (r) { return (r.location || "") + "|" + (r.lotId || ""); },
     year: function (r) { return r.year || 0; },
     mileage: function (r) { return r.mileage == null ? 1e12 : r.mileage; },
@@ -685,8 +698,18 @@
       if (r.airbags === "deployed") screen += ' <span class="badge red" title="Airbags deployed">airbags</span>';
       var doc = r.docType || "";
       var docCls = /clear|clean/i.test(doc) ? "clean" : /salvage|scrap|junk/i.test(doc) ? "salvage" : "unknown";
+      var askNum = r.buyItNow != null ? r.buyItNow : (r.currentBid != null && r.currentBid > 0 ? r.currentBid : null);
+      var maxCell, maxTitle;
+      if (r.maxBid70 != null) {
+        maxTitle = "70% rule: comp retail " + fmt$(r.compRetail) + " × 70% − est. repairs " + fmt$(r.repairEst70);
+        var maxOk = askNum != null && askNum <= r.maxBid70;
+        maxCell = '<span class="t ' + (maxOk ? "up" : "") + '" title="' + esc(maxTitle) + '">' + fmt$(r.maxBid70) + "</span>";
+      } else {
+        maxCell = '<span class="muted" title="No Madison comp median for this model">–</span>';
+      }
       return "<tr>" +
         '<td class="num"><span class="t">' + ask + "</span></td>" +
+        '<td class="num">' + maxCell + "</td>" +
         '<td><a href="' + esc(r.url) + '" target="_blank" rel="noopener">Lot ' + esc(r.lotId) + "</a><br>" +
         '<span class="muted" style="font-size:0.75rem">' + esc(r.location) + "</span></td>" +
         '<td class="num"><span class="t">' + (r.year || "–") + "</span></td>" +
@@ -696,7 +719,7 @@
         '<td class="num"><span class="t">' + esc(r.saleDate || "Future") + "</span></td>" +
         "<td>" + screen + "</td>" +
         "</tr>";
-    }).join("") || '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">No auction lots under the current filters.</td></tr>';
+    }).join("") || '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px">No auction lots under the current filters.</td></tr>';
     document.querySelectorAll("#auctionsTable th[data-sort]").forEach(function (th) {
       var k = th.dataset.sort;
       th.innerHTML = th.textContent.replace(/ [▲▼]/, "") + (aucSortKey === k ? (aucSortDir === 1 ? " ▲" : " ▼") : "");
@@ -833,6 +856,12 @@
     var radius = $("radius");
     radius.oninput = function () { $("radiusVal").textContent = radius.value; };
     radius.onchange = function () { state.radius = +radius.value; renderAll(); };
+
+    var dealRepairs = $("dealRepairs");
+    if (dealRepairs) {
+      dealRepairs.oninput = function () { renderDeals(); };
+      dealRepairs.onchange = function () { renderDeals(); };
+    }
 
     document.querySelectorAll("#listingsTable th[data-sort]").forEach(function (th) {
       th.onclick = function () {
