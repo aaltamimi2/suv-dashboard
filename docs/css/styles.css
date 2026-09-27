@@ -156,6 +156,9 @@ h2 {
 .rank-list .name { display: block; margin-top: 2px; font-size: 0.8rem; color: var(--text-secondary);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 190px; }
 .rank-list .metric { font-family: var(--mono); font-size: 0.8rem; font-weight: 500; font-variant-numeric: tabular-nums; color: var(--text); }
+.deal-controls { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+.deal-controls input[type="number"] { width: 90px; font-family: var(--mono); font-size: 0.8rem; padding: 3px 6px; border: 1px solid var(--border, #d7dee8); border-radius: 6px; background: var(--surface, #fff); color: var(--text); }
+.deal70 { display: block; font-size: 0.72rem; margin-top: 2px; font-variant-numeric: tabular-nums; }
 .rank-list a.rowlink { color: inherit; text-decoration: none; display: contents; }
 .empty-state {
   padding: 14px 12px; border-radius: var(--radius-sm);
